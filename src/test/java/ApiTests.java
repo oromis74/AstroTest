@@ -1,3 +1,4 @@
+import io.restassured.http.Method;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ public class ApiTests extends TestController{
         JSONObject body = new JSONObject();
         body.put("username","admin");
         body.put("password","password123");
-        useAPI("POST","https://restful-booker.herokuapp.com/auth",
+        useAPI(Method.POST,"https://restful-booker.herokuapp.com/auth",
                 null,body,null,null,200);
     }
 
@@ -23,7 +24,7 @@ public class ApiTests extends TestController{
         Map<String,String> queryRequest = new HashMap<>();
         queryRequest.put("firstname","sally");
         queryRequest.put("lastname","brown");
-        JSONObject booksIds = useAPI("GET","https://restful-booker.herokuapp.com/booking",
+        JSONObject booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking",
                 null,null,null,null,200);
 
         assert booksIds.getJSONArray("fix").length()>0;
@@ -35,7 +36,7 @@ public class ApiTests extends TestController{
         String bookId = String.valueOf(booksIds.getJSONArray("fix")
                 .getJSONObject(0).getInt("bookingid"));
 
-        booksIds = useAPI("GET",String.format("https://restful-booker.herokuapp.com/booking/%s",
+        booksIds = useAPI(Method.GET,String.format("https://restful-booker.herokuapp.com/booking/%s",
                         bookId ),
                 null,null,null,null,200);
 
@@ -45,11 +46,11 @@ public class ApiTests extends TestController{
         assert Objects.nonNull(booksIds.get("bookingdates"));
 
         //вызов REST API с несуществующим Id, проверка что код ответа будет 404
-        booksIds = useAPI("GET","https://restful-booker.herokuapp.com/booking/00000",
+        booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking/00000",
                 null,null,null,null,404);
         System.out.println(booksIds);
         //вызов REST API с некорректным методом запроса, проверка что код ответа будет 405
-        booksIds = useAPI("UPDATE",String.format("https://restful-booker.herokuapp.com/booking/%s",
+        booksIds = useAPI(Method.PATCH,String.format("https://restful-booker.herokuapp.com/booking/%s",
                         bookId),
                 null,null,null,null,405);
         System.out.println(booksIds);

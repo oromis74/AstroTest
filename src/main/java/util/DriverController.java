@@ -1,11 +1,8 @@
 package util;
 
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxDriverService;
 import org.openqa.selenium.firefox.FirefoxOptions;
 
 import java.io.File;
@@ -14,6 +11,8 @@ public class DriverController {
 
     private final WebDriver driver;
 
+
+    //TODO добавить поддержку selenoid и выбор браузера через параметы теста
 
     public DriverController() {
 

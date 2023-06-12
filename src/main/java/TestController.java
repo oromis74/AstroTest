@@ -1,4 +1,5 @@
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.Method;
 import io.restassured.response.Response;
 import org.apache.http.util.Asserts;
 import org.json.JSONException;
@@ -9,13 +10,13 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import util.ContextController;
 import util.DriverController;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static io.restassured.RestAssured.given;
 
@@ -24,17 +25,23 @@ public class TestController {
 
     private DriverController driverController;
 
+    private ContextController contextController;
+    private Properties props;
     @BeforeEach
-    private void loadBrowser(){
-        this.driverController = new DriverController();
-        this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
-        this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+    private void prepareTest(){
+        try {
+            props = new Properties();
+            props.load(new FileInputStream("src/main/resources/config.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-
-
 
     public void getPage(String url){
         this.driverController.dr().get(url);
+        this.driverController = new DriverController();
+        this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
 
     public void input(String field,String value){
@@ -75,7 +82,7 @@ public class TestController {
      * @param queryParam
      * @return
      */
-    public JSONObject useAPI(String method, String baseurl, Map<String, String> auth, JSONObject body, Map<String, String> formParam, Map<String, String> queryParam, Integer waitCode){
+    public JSONObject useAPI(Method method, String baseurl, Map<String, String> auth, JSONObject body, Map<String, String> formParam, Map<String, String> queryParam, Integer waitCode){
         RequestSpecBuilder specBuilder = new RequestSpecBuilder();
         JSONObject returnObject = null;
         specBuilder.setBaseUri(baseurl);
@@ -88,11 +95,11 @@ public class TestController {
             queryParam.forEach(specBuilder::addQueryParam);
         String responseBody = null;
         Response response = null;
-        if(method.contains("POST")){
+        if(method.equals(Method.POST)){
             specBuilder.addHeader("Content-Type","application/json");
             response = given().log().all().spec(specBuilder.build()).post();
         }
-        if(method.contains("GET")){
+        if(method.equals(Method.GET)){
             response = given().log().all().spec(specBuilder.build()).get();
         }
 
@@ -123,7 +130,8 @@ public class TestController {
 
     @AfterEach
     private void afterTest(){
-        this.driverController.dr().quit();
+        if(this.driverController!=null)
+            this.driverController.dr().quit();
     }
 
 
