@@ -3,7 +3,7 @@ plugins {
 }
 
 
-group 'org.unity.selena'
+group 'org.astrotest'
 version '0.2'
 
 
@@ -11,10 +11,9 @@ compileJava.options.encoding = 'UTF-8'
 
 sourceCompatibility = '20'
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
-
 
 
 repositories {
