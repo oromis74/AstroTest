@@ -1,4 +1,8 @@
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.response.Response;
 import org.apache.http.util.Asserts;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
@@ -9,7 +13,11 @@ import util.DriverController;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+
+import static io.restassured.RestAssured.given;
 
 public class TestController {
 
@@ -17,7 +25,7 @@ public class TestController {
     private DriverController driverController;
 
     @BeforeEach
-    public void loadBrowser(){
+    private void loadBrowser(){
         this.driverController = new DriverController();
         this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
@@ -34,15 +42,16 @@ public class TestController {
         element.sendKeys(value);
     }
 
+    public void select(String field,String listElement,String value){
+        WebElement elementField = FindElementImpl(By.xpath(field));
+        elementField.click();
+        WebElement elementList = FindElementImpl(By.xpath(String.format(listElement,value)));
+        elementList.click();
+    }
+
     public void click(String field){
         WebElement element = FindElementImpl(By.xpath(field));
         element.click();
-    }
-
-    public void assertField(String field, String value){
-        WebElement element = FindElementImpl(By.xpath(field));
-        System.out.println(element.getText());
-        Asserts.check(element.getText().contains(value),"Поле не содержит ожидаемое значение");
     }
 
     public void contextClick(String field){
@@ -51,9 +60,69 @@ public class TestController {
         actions.moveToElement(element).contextClick().build().perform();
     }
 
+    public void assertField(String field, String value){
+        WebElement element = FindElementImpl(By.xpath(field));
+        System.out.println(element.getText());
+        Asserts.check(element.getText().contains(value),"Поле не содержит ожидаемое значение");
+    }
+
+    /**
+     * @param method
+     * @param baseurl
+     * @param auth
+     * @param body
+     * @param formParam
+     * @param queryParam
+     * @return
+     */
+    public JSONObject useAPI(String method, String baseurl, Map<String, String> auth, JSONObject body, Map<String, String> formParam, Map<String, String> queryParam, Integer waitCode){
+        RequestSpecBuilder specBuilder = new RequestSpecBuilder();
+        JSONObject returnObject = null;
+        specBuilder.setBaseUri(baseurl);
+        if(Objects.nonNull(body)){
+            specBuilder.setBody(body.toString());
+        }
+        if(formParam!=null)
+            formParam.forEach(specBuilder::addFormParam);
+        if(queryParam!=null)
+            queryParam.forEach(specBuilder::addQueryParam);
+        String responseBody = null;
+        Response response = null;
+        if(method.contains("POST")){
+            specBuilder.addHeader("Content-Type","application/json");
+            response = given().log().all().spec(specBuilder.build()).post();
+        }
+        if(method.contains("GET")){
+            response = given().log().all().spec(specBuilder.build()).get();
+        }
+
+        System.out.println("--------------------------------------");
+        if(response!=null){
+            if(waitCode!=null){
+                response.then().statusCode(waitCode);
+            }
+            if(response.getBody()!=null)
+                responseBody = response.getBody().prettyPrint();
+        }
+        else {
+            System.out.println("Response is null");
+        }
+        System.out.println("--------------------------------------");
+
+        try {
+            returnObject = new JSONObject(responseBody);
+        }
+        catch (JSONException e){
+            returnObject = new JSONObject("{ \"fix\": "+responseBody+"}");
+        }
+        finally {
+            return returnObject;
+        }
+    }
+
 
     @AfterEach
-    public void afterTest(){
+    private void afterTest(){
         this.driverController.dr().quit();
     }
 
