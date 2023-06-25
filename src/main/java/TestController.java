@@ -1,6 +1,11 @@
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
 import io.restassured.http.Method;
+import io.restassured.module.jsv.JsonSchemaValidator;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 import org.apache.http.util.Asserts;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,15 +18,16 @@ import org.openqa.selenium.interactions.Actions;
 import util.ContextController;
 import util.DriverController;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.module.jsv.JsonSchemaValidatorSettings.settings;
 
 public class TestController {
-
 
     private DriverController driverController;
 
@@ -73,43 +79,64 @@ public class TestController {
         Asserts.check(element.getText().contains(value),"Поле не содержит ожидаемое значение");
     }
 
-    /**
-     * @param method
-     * @param baseurl
-     * @param auth
-     * @param body
-     * @param formParam
-     * @param queryParam
-     * @return
-     */
-    public JSONObject useAPI(Method method, String baseurl, Map<String, String> auth, JSONObject body, Map<String, String> formParam, Map<String, String> queryParam, Integer waitCode){
+
+    public JSONObject useAPI(Method method,
+                             String baseurl,
+                             Map<String, String> auth,
+                             Map<String, String> formParam,
+                             Map<String, String> queryParam,
+                             JSONObject body,
+                             ResponseSpecification validateResponse){
         RequestSpecBuilder specBuilder = new RequestSpecBuilder();
         JSONObject returnObject = null;
         specBuilder.setBaseUri(baseurl);
         if(Objects.nonNull(body)){
             specBuilder.setBody(body.toString());
         }
+
         if(formParam!=null)
             formParam.forEach(specBuilder::addFormParam);
         if(queryParam!=null)
             queryParam.forEach(specBuilder::addQueryParam);
         String responseBody = null;
         Response response = null;
+        RequestSpecification request = specBuilder.build();
+
+
+        if (auth != null){
+            if(auth.get("type").contains("Bearer")){
+                request.auth()
+                        .oauth2(auth.get("token"));
+            }
+            if(auth.get("type").contains("form")){
+                request.auth()
+                        .form(auth.get("login"),auth.get("pass"));
+            }
+            if(auth.get("type").contains("form")){
+                request.auth()
+                        .form(auth.get("login"),auth.get("pass"));
+            }
+        }
+
+
         if(method.equals(Method.POST)){
             specBuilder.addHeader("Content-Type","application/json");
-            response = given().log().all().spec(specBuilder.build()).post();
+            response = given().log().all().spec(request).post();
         }
         if(method.equals(Method.GET)){
-            response = given().log().all().spec(specBuilder.build()).get();
+            response = given().log().all().spec(request).get();
         }
 
         System.out.println("--------------------------------------");
+
+
+
+
         if(response!=null){
-            if(waitCode!=null){
-                response.then().statusCode(waitCode);
-            }
-            if(response.getBody()!=null)
+            response.then().spec(validateResponse);
+            if(response.getBody()!=null){
                 responseBody = response.getBody().prettyPrint();
+            }
         }
         else {
             System.out.println("Response is null");

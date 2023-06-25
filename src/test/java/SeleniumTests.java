@@ -8,7 +8,8 @@ public class SeleniumTests extends TestController {
         getPage("https://ya.ru/");
         input("//input[@id='text']","Selenium 4");
         click("//button[text()='Найти']");
-        assertField("//li[contains(@class,'serp-item')][1]//div[contains(@class,'Organic-Subtitle')]//b","selenium.dev");
+        assertField("//li[contains(@class,'serp-item')][1]//div[contains(@class,'Organic-Subtitle')]//b",
+                "selenium.dev");
 
     }
 
@@ -19,7 +20,8 @@ public class SeleniumTests extends TestController {
         input("//textarea[@title='Поиск']","Selenium 4");
         click("//img[@alt='Google']");
         click("//input[@aria-label='Поиск в Google']");
-        assertField("//h1[text()='Результаты поиска']/ancestor::div[1]/div/div[1]//cite","selenium.dev");
+        assertField("//h1[text()='Результаты поиска']/ancestor::div[1]/div/div[1]//cite",
+                "selenium.dev");
     }
 
 }

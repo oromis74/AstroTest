@@ -1,7 +1,12 @@
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.http.ContentType;
 import io.restassured.http.Method;
+import io.restassured.module.jsv.JsonSchemaValidator;
+import io.restassured.specification.ResponseSpecification;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +21,7 @@ public class ApiTests extends TestController{
         body.put("username","admin");
         body.put("password","password123");
         useAPI(Method.POST,"https://restful-booker.herokuapp.com/auth",
-                null,body,null,null,200);
+                null,null,null,body,configValidation(200,null,null));
     }
 
     @Test
@@ -25,7 +30,7 @@ public class ApiTests extends TestController{
         queryRequest.put("firstname","sally");
         queryRequest.put("lastname","brown");
         JSONObject booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking",
-                null,null,null,null,200);
+                null,null,null,null,configValidation(200,null,null));
 
         assert booksIds.getJSONArray("fix").length()>0;
 
@@ -38,7 +43,8 @@ public class ApiTests extends TestController{
 
         booksIds = useAPI(Method.GET,String.format("https://restful-booker.herokuapp.com/booking/%s",
                         bookId ),
-                null,null,null,null,200);
+                null,null,null,null,configValidation(200,"src/test/resources/booking-template.json",ContentType.JSON));
+        System.out.println(booksIds);
 
         //проверить что
         assert Objects.nonNull(booksIds.get("firstname"));
@@ -47,13 +53,26 @@ public class ApiTests extends TestController{
 
         //вызов REST API с несуществующим Id, проверка что код ответа будет 404
         booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking/00000",
-                null,null,null,null,404);
+                null,null,null,null,configValidation(404,null,null));
         System.out.println(booksIds);
         //вызов REST API с некорректным методом запроса, проверка что код ответа будет 405
         booksIds = useAPI(Method.PATCH,String.format("https://restful-booker.herokuapp.com/booking/%s",
                         bookId),
-                null,null,null,null,405);
+                null,null,null,null,configValidation(405,null,null));
         System.out.println(booksIds);
+    }
+
+
+
+    public ResponseSpecification configValidation(int code, String jsonSchema, ContentType type){
+        ResponseSpecBuilder responseSpecBuilder = new ResponseSpecBuilder();
+        if(Objects.nonNull(type))
+            responseSpecBuilder.expectContentType(type);
+        if(Objects.nonNull(code))
+            responseSpecBuilder.expectStatusCode(code);
+        if(Objects.nonNull(jsonSchema))
+            responseSpecBuilder.expectBody(JsonSchemaValidator.matchesJsonSchema(new File(jsonSchema)));
+        return responseSpecBuilder.build();
     }
 
 
