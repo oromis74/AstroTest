@@ -1,3 +1,6 @@
+import io.qameta.allure.Feature;
+import io.qameta.allure.Step;
+import io.qameta.allure.Story;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.http.Method;
@@ -7,15 +10,13 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ApiTests extends TestController{
 
-
     @Test
+    @Feature("API")
+    @Story("Проверка API получения авторизации")
     public void OneApiTest(){
         JSONObject body = new JSONObject();
         body.put("username","admin");
@@ -25,10 +26,9 @@ public class ApiTests extends TestController{
     }
 
     @Test
+    @Feature("API")
+    @Story("Проверка API получения списка и получения по ID")
     public void TwoApiTest(){
-        Map<String,String> queryRequest = new HashMap<>();
-        queryRequest.put("firstname","sally");
-        queryRequest.put("lastname","brown");
         JSONObject booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking",
                 null,null,null,null,configValidation(200,null,null));
 
@@ -64,6 +64,7 @@ public class ApiTests extends TestController{
 
 
 
+    @Step("Проверка ответа API ожидаемый код ответа:{code}, типа данных ответа:{type}, шаблон для проверки API:{jsonSchema}")
     public ResponseSpecification configValidation(int code, String jsonSchema, ContentType type){
         ResponseSpecBuilder responseSpecBuilder = new ResponseSpecBuilder();
         if(Objects.nonNull(type))
@@ -77,3 +78,4 @@ public class ApiTests extends TestController{
 
 
 }
+

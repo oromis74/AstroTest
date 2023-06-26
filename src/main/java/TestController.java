@@ -1,3 +1,4 @@
+import io.qameta.allure.Step;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
@@ -43,13 +44,15 @@ public class TestController {
         }
     }
 
+    @Step("Перейти по URL: {url}")
     public void getPage(String url){
-        this.driverController.dr().get(url);
         this.driverController = new DriverController();
+        this.driverController.dr().get(url);
         this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
     }
 
+    @Step("В поле {field} ввести значение {value}")
     public void input(String field,String value){
         WebElement element = FindElementImpl(By.xpath(field));
         element.sendKeys(value);
@@ -62,6 +65,7 @@ public class TestController {
         elementList.click();
     }
 
+    @Step("Нажать на поле {field}")
     public void click(String field){
         WebElement element = FindElementImpl(By.xpath(field));
         element.click();
@@ -73,6 +77,7 @@ public class TestController {
         actions.moveToElement(element).contextClick().build().perform();
     }
 
+    @Step("Проверка значения {value} в поле {field}")
     public void assertField(String field, String value){
         WebElement element = FindElementImpl(By.xpath(field));
         System.out.println(element.getText());
@@ -80,6 +85,7 @@ public class TestController {
     }
 
 
+    @Step("Вызов API endpoint {baseurl}")
     public JSONObject useAPI(Method method,
                              String baseurl,
                              Map<String, String> auth,
