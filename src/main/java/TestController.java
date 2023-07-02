@@ -1,13 +1,11 @@
 import io.qameta.allure.Step;
 import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.builder.ResponseSpecBuilder;
-import io.restassured.http.ContentType;
 import io.restassured.http.Method;
-import io.restassured.module.jsv.JsonSchemaValidator;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.restassured.specification.ResponseSpecification;
 import org.apache.http.util.Asserts;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -16,19 +14,17 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import util.ContextController;
-import util.DriverController;
+import util.*;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 
 import static io.restassured.RestAssured.given;
-import static io.restassured.module.jsv.JsonSchemaValidatorSettings.settings;
 
-public class TestController {
+public class TestController implements MethodUI, MethodsRestAPI {
 
     private DriverController driverController;
 
@@ -53,11 +49,12 @@ public class TestController {
     }
 
     @Step("В поле {field} ввести значение {value}")
-    public void input(String field,String value){
+    public void enter(String field, String value){
         WebElement element = FindElementImpl(By.xpath(field));
         element.sendKeys(value);
     }
 
+    @Step("В поле {field} выбрать значение {value}")
     public void select(String field,String listElement,String value){
         WebElement elementField = FindElementImpl(By.xpath(field));
         elementField.click();
@@ -71,7 +68,7 @@ public class TestController {
         element.click();
     }
 
-    public void contextClick(String field){
+    public void contextClick(String field,String value){
         WebElement element = this.driverController.dr().findElement(By.xpath(field));
         Actions actions = new Actions(this.driverController.dr());
         actions.moveToElement(element).contextClick().build().perform();
@@ -86,15 +83,16 @@ public class TestController {
 
 
     @Step("Вызов API endpoint {baseurl}")
-    public JSONObject useAPI(Method method,
+    public ResponseObjectAPI useAPI(Method method,
                              String baseurl,
                              Map<String, String> auth,
                              Map<String, String> formParam,
                              Map<String, String> queryParam,
                              JSONObject body,
-                             ResponseSpecification validateResponse){
+                             ResponseSpecification validateResponse,
+                             ExpectedReturnBody type){
         RequestSpecBuilder specBuilder = new RequestSpecBuilder();
-        JSONObject returnObject = null;
+        ResponseObjectAPI returnObject = new ResponseObjectAPI();
         specBuilder.setBaseUri(baseurl);
         if(Objects.nonNull(body)){
             specBuilder.setBody(body.toString());
@@ -136,8 +134,6 @@ public class TestController {
         System.out.println("--------------------------------------");
 
 
-
-
         if(response!=null){
             response.then().spec(validateResponse);
             if(response.getBody()!=null){
@@ -150,24 +146,24 @@ public class TestController {
         System.out.println("--------------------------------------");
 
         try {
-            returnObject = new JSONObject(responseBody);
+            switch (type){
+                case JSON -> returnObject.setObject(new JSONObject(responseBody));
+                case TEXT -> returnObject.setRowData(responseBody);
+                case BYTE -> returnObject.setBytes(responseBody.getBytes(StandardCharsets.UTF_8));
+
+            }
         }
         catch (JSONException e){
-            returnObject = new JSONObject("{ \"fix\": "+responseBody+"}");
+            returnObject.setObjects(new JSONArray(responseBody));
         }
-        finally {
-            return returnObject;
-        }
+        return returnObject;
     }
-
-
+    
     @AfterEach
     private void afterTest(){
         if(this.driverController!=null)
             this.driverController.dr().quit();
     }
-
-
 
     private WebElement FindElementImpl(By xpath){
         List<WebElement> elements = this.driverController.dr().findElements(xpath);
@@ -178,7 +174,6 @@ public class TestController {
         System.out.println(findElement.get().getTagName());
         return findElement.get();
     }
-
 
     private boolean checkElementVisible(WebElement element){
         try{
@@ -195,7 +190,5 @@ public class TestController {
 
         return false;
     }
-
-
 
 }
