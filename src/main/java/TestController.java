@@ -42,10 +42,13 @@ public class TestController implements MethodUI, MethodsRestAPI {
 
     @Step("Перейти по URL: {url}")
     public void getPage(String url){
-        this.driverController = new DriverController();
+        if (Objects.isNull(this.driverController)){
+            this.driverController = new DriverController();
+            this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+            this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        }
         this.driverController.dr().get(url);
-        this.driverController.dr().manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
-        this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+        this.driverController.dr().manage().window().maximize();
     }
 
     @Step("В поле {field} ввести значение {value}")
@@ -69,9 +72,11 @@ public class TestController implements MethodUI, MethodsRestAPI {
     }
 
     public void contextClick(String field,String value){
-        WebElement element = this.driverController.dr().findElement(By.xpath(field));
+        WebElement element = FindElementImpl(By.xpath(field));
         Actions actions = new Actions(this.driverController.dr());
         actions.moveToElement(element).contextClick().build().perform();
+        WebElement listElement = FindElementImpl(By.xpath(value));
+        actions.moveToElement(listElement).click().build().perform();
     }
 
     @Step("Проверка значения {value} в поле {field}")
@@ -166,6 +171,7 @@ public class TestController implements MethodUI, MethodsRestAPI {
     }
 
     private WebElement FindElementImpl(By xpath){
+        this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         List<WebElement> elements = this.driverController.dr().findElements(xpath);
         assert elements.size()>0;
         System.out.printf("Найдено %s элементов на странице по xpath %s%n",elements.size(),xpath.toString());
@@ -175,6 +181,23 @@ public class TestController implements MethodUI, MethodsRestAPI {
         return findElement.get();
     }
 
+    private WebElement FindElementByTemplateImpl(String xpath){
+        WebElement element = null;
+        this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofMillis(150));
+        for(int c = 1; c < 5; c++){
+            List<WebElement> elements = this.driverController.dr().findElements(By.xpath(String.format(xpath,c)));
+            assert elements.size()>0;
+            System.out.printf("Найдено %s элементов на странице по xpath %s%n",elements.size(),xpath.toString());
+            Optional<WebElement> findElement = elements.stream().filter(this::checkElementVisible).findFirst();
+            if(findElement.isPresent()){
+                System.out.println(findElement.get().getTagName());
+                element = findElement.get();
+
+            }
+        }
+        Asserts.check(Objects.nonNull(element),"Не найден web element");
+        return element;
+    }
     private boolean checkElementVisible(WebElement element){
         try{
             Actions actions = new Actions(driverController.dr());
