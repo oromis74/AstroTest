@@ -1,24 +1,19 @@
 import io.qameta.allure.Feature;
-import io.qameta.allure.Step;
 import io.qameta.allure.Story;
-import io.restassured.builder.ResponseSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.http.Method;
-import io.restassured.module.jsv.JsonSchemaValidator;
-import io.restassured.specification.ResponseSpecification;
 import org.json.JSONObject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import util.ExpectedReturnBody;
 import util.ResponseObjectAPI;
 
-import java.io.File;
-import java.util.*;
+import java.util.Objects;
 
-import static util.ExpectedReturnBody.*;
+import static util.ExpectedReturnBody.JSON;
+import static util.ExpectedReturnBody.TEXT;
 
 public class ApiTests extends TestController{
 
@@ -30,7 +25,7 @@ public class ApiTests extends TestController{
         body.put("username","admin");
         body.put("password","password123");
         useAPI(Method.POST,"https://restful-booker.herokuapp.com/auth",
-                null,null,null,body,configValidation(200,null,null), JSON);
+                null,null,null,body,configValidation(200,25,null,null), JSON);
     }
 
     @Test
@@ -38,7 +33,7 @@ public class ApiTests extends TestController{
     @Story("Проверка API получения списка и получения по ID")
     public void TwoApiTest(){
         ResponseObjectAPI booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking",
-                null,null,null,null,configValidation(200,null,null), JSON);
+                null,null,null,null,configValidation(200,10,null,null), JSON);
 
         assert booksIds.getObjects().length()>0;
 
@@ -54,7 +49,7 @@ public class ApiTests extends TestController{
                         bookId ),
                 null,null,null,
                 null,
-                configValidation(200,"src/test/resources/booking-template.json",ContentType.JSON),
+                configValidation(200,25,"restful-booker/booking-template.json",ContentType.JSON),
                 JSON);
         System.out.println(booksIds.getObject());
 
@@ -65,14 +60,14 @@ public class ApiTests extends TestController{
 
         //вызов REST API с несуществующим Id, проверка что код ответа будет 404
         booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking/00000",
-                null,null,null,null,configValidation(404,null,null),
+                null,null,null,null,configValidation(404,10,null,null),
                 TEXT);
         System.out.println(booksIds.getRowData());
         //вызов REST API с некорректным методом запроса, проверка что код ответа будет 405
         booksIds = useAPI(Method.PATCH,String.format("https://restful-booker.herokuapp.com/booking/%s",
                         bookId),
-                null,null,null,null,configValidation(405,null,null),
-                TEXT);
+                null,null,null,null,configValidation(405,10,null,null),
+                null);
 
         System.out.println(booksIds.getRowData());
     }
@@ -81,22 +76,12 @@ public class ApiTests extends TestController{
     @ParameterizedTest
     @ValueSource(strings = {"https://www.google.com/","https://www.ya.ru/"})
     @DisplayName("Тест проверки сайта")
+    @Tag("run")
     public void TestSite(String site){
-        ResponseObjectAPI response = useAPI(Method.GET,site,null,null,null,null,configValidation(200,null,null), TEXT);
+        ResponseObjectAPI response = useAPI(Method.GET,site,null,null,null,null,configValidation(200,10,null,null), TEXT);
         System.out.println("HTML PAGE: " + response.getRowData());
     }
 
-    @Step("Список проверок для вызова API \n ожидаемый код ответа:{code}, типа данных ответа:{type}, шаблон для проверки API:{jsonSchema}")
-    public ResponseSpecification configValidation(int code, String jsonSchema, ContentType type){
-        ResponseSpecBuilder responseSpecBuilder = new ResponseSpecBuilder();
-        if(Objects.nonNull(type))
-            responseSpecBuilder.expectContentType(type);
-        if(Objects.nonNull(code))
-            responseSpecBuilder.expectStatusCode(code);
-        if(Objects.nonNull(jsonSchema))
-            responseSpecBuilder.expectBody(JsonSchemaValidator.matchesJsonSchema(new File(jsonSchema)));
-        return responseSpecBuilder.build();
-    }
 
 
 
