@@ -3,6 +3,7 @@ import io.qameta.allure.Story;
 import io.restassured.http.ContentType;
 import io.restassured.http.Method;
 import org.json.JSONObject;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -25,15 +26,18 @@ public class ApiTests extends TestController{
         body.put("username","admin");
         body.put("password","password123");
         useAPI(Method.POST,"https://restful-booker.herokuapp.com/auth",
-                null,null,null,body,configValidation(200,25,null,null), JSON);
+                null,null,null,body,
+                configValidation(200,25,null,null), JSON);
     }
 
     @Test
     @Feature("API")
-    @Story("Проверка API получения списка и получения по ID")
+    @Story("Проверка API получения списка и получения books по ID")
+    @Tag("run")
     public void TwoApiTest(){
         ResponseObjectAPI booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking",
-                null,null,null,null,configValidation(200,10,null,null), JSON);
+                null,null,null,null,
+                configValidation(200,10,null,null), JSON);
 
         assert booksIds.getObjects().length()>0;
 
@@ -54,9 +58,9 @@ public class ApiTests extends TestController{
         System.out.println(booksIds.getObject());
 
         //проверить что
-        assert Objects.nonNull(booksIds.getObject().get("firstname"));
-        assert Objects.nonNull(booksIds.getObject().get("lastname"));
-        assert Objects.nonNull(booksIds.getObject().get("bookingdates"));
+        Assertions.assertNotNull(booksIds.getObject().get("firstname"));
+        Assertions.assertNotNull(booksIds.getObject().get("lastname"));
+        Assertions.assertNotNull(booksIds.getObject().get("bookingdates"));
 
         //вызов REST API с несуществующим Id, проверка что код ответа будет 404
         booksIds = useAPI(Method.GET,"https://restful-booker.herokuapp.com/booking/00000",
