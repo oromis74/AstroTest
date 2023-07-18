@@ -267,7 +267,7 @@ public abstract class TestController {
         List<WebElement> elements = this.driverController.dr().findElements(xpath);
         assert elements.size()>0;
         System.out.printf("Найдено %s элементов на странице по xpath %s%n",elements.size(),xpath.toString());
-        Optional<WebElement> findElement = elements.stream().filter(t->checkElementVisible(t,false)).findFirst();
+        Optional<WebElement> findElement = elements.stream().filter(t->checkElementVisible(t,true)).findFirst();
         Assertions.assertTrue(findElement.isPresent(), "Web Element не найден");
         System.out.println(findElement.get().getTagName());
         return findElement.get();
@@ -276,7 +276,7 @@ public abstract class TestController {
         this.driverController.dr().manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
         List<WebElement> elements = this.driverController.dr().findElements(xpath);
         System.out.printf("Найдено %s элементов на странице по xpath %s%n",elements.size(),xpath.toString());
-        return elements.stream().filter(t->checkElementVisible(t,false)).toList();
+        return elements.stream().filter(t->checkElementVisible(t,true)).toList();
     }
 
     private WebElement FindElementByTemplateImpl(String xpath){
@@ -286,11 +286,10 @@ public abstract class TestController {
             List<WebElement> elements = this.driverController.dr().findElements(By.xpath(String.format(xpath,c)));
             assert elements.size()>0;
             System.out.printf("Найдено %s элементов на странице по xpath %s%n",elements.size(),xpath.toString());
-            Optional<WebElement> findElement = elements.stream().filter(t->checkElementVisible(t,false)).findFirst();
+            Optional<WebElement> findElement = elements.stream().filter(t->checkElementVisible(t,true)).findFirst();
             if(findElement.isPresent()){
                 System.out.println(findElement.get().getTagName());
                 element = findElement.get();
-
             }
         }
         Assertions.assertTrue(Objects.nonNull(element),"Не найден web element");
