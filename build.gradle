@@ -14,7 +14,7 @@ def junit5Version = "5.6.2"
 
 compileJava.options.encoding = 'UTF-8'
 
-sourceCompatibility = '20'
+sourceCompatibility = '19'
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -30,14 +30,19 @@ dependencies {
     implementation 'io.qameta.allure:allure-junit5:2.19.0'
     implementation 'org.aspectj:aspectjweaver:1.9.19'
 
-    implementation 'org.seleniumhq.selenium:selenium-java:4.9.1'
-    implementation 'io.rest-assured:rest-assured:4.3.0'
+//    implementation 'org.seleniumhq.selenium:selenium-java:4.9.1'
+    implementation 'io.rest-assured:rest-assured:5.5.1'
+    implementation 'com.codeborne:selenide:7.7.0'
+
+    compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+
     implementation 'io.rest-assured:json-schema-validator:4.3.0'
     implementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     implementation 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     implementation 'org.junit.jupiter:junit-jupiter-params:5.8.1'
     implementation 'org.junit.platform:junit-platform-suite:1.8.1'
-    implementation 'org.json:json:20220320'
+    implementation 'org.json:json:20231013'
 
 }
 
